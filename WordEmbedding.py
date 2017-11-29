@@ -3,7 +3,7 @@
 import os
 
 from gensim.models import word2vec
-from WikiIterator import wiki_sentences
+from WikiIterator import WakatiCorpus
 
 class WordEmbedding(object):
 
