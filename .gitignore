@@ -105,3 +105,4 @@ extracted/
 *.tsv
 *.txt
 *.model
+*.dict

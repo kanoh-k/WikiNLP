@@ -12,6 +12,14 @@ class WordEmbedding(object):
 
     def __init__(self):
         self.model = None
+        self.w2i = {} # word --> id mapping
+        self.i2w = {} # id --> word mapping
+
+        # Temporal variable
+        self.vocabulary = None
+
+    def __contains__(self, word):
+        return word in self.vocabulary
 
     def load(self, filename=MODEL_FILE):
         """ Load word2vec model"""
@@ -20,6 +28,9 @@ class WordEmbedding(object):
             raise Exception('Model not found: {}'.format(filename))
 
         self.model = word2vec.Word2Vec.load(filename)
+
+        dict_filename = '{}.dict'.format(filename)
+        self.__load_word_ids(dict_filename)
 
     def prepare_corpus(self, filename=WAKATI_CORPUS_FILE):
         if not os.path.exists(filename):
@@ -32,9 +43,13 @@ class WordEmbedding(object):
 
         corpus = word2vec.LineSentence(filename)
         self.model = word2vec.Word2Vec(corpus, size=200, min_count=5, workers=6)
+        self.__compute_word_ids()
 
     def save(self, filename=MODEL_FILE):
         self.model.save(filename)
+
+        dict_filename = '{}.dict'.format(filename)
+        self.__save_word_ids(filename=dict_filename)
 
     def get_model(self):
         return self.model
@@ -67,6 +82,29 @@ class WordEmbedding(object):
                 # Save metadata TSV file
                 g.write(word + '\n')
 
+    def __compute_word_ids(self):
+        self.vocabulary = sorted(list(self.model.wv.vocab.keys()) +
+                                 ['<bos>', '<eos>', '<unk>'])
+        self.w2i = {w:i for i,w in enumerate(self.vocabulary)}
+        self.i2w = {i:w for i,w in enumerate(self.vocabulary)}
+
+    def __save_word_ids(self, filename):
+        if not self.vocabulary:
+            self.__compute_word_ids()
+
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.writelines([w + '\n' for w in self.vocabulary])
+
+    def __load_word_ids(self, filename):
+        if not os.path.exists(filename):
+            print('{} not found. Compute word ids from the model instead.'.format(filename))
+            self.__compute_word_ids()
+            return
+
+        with open(filename, 'r', encoding='utf-8') as f:
+            vocabulary = [w.strip() for w in f.readlines()]
+            self.w2i = {w:i for i,w in enumerate(vocabulary)}
+            self.i2w = {i:w for i,w in enumerate(vocabulary)}
 
 def learn():
     embedding = WordEmbedding()
@@ -77,7 +115,7 @@ def embedding_projector():
     embedding = WordEmbedding()
     embedding.load()
 
-    print('Vocaburary size:', embedding.get_vocabulary_size())
+    print('vocabulary size:', embedding.get_vocabulary_size())
     embedding.save_embedding_projector_files('vector.tsv', 'metadata.tsv')
 
 if __name__ == '__main__':
