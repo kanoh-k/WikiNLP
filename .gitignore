@@ -102,6 +102,6 @@ ENV/
 
 # Data
 extracted/
-.tsv
-.txt
-.model
+*.tsv
+*.txt
+*.model
