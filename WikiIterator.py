@@ -34,17 +34,17 @@ class WakatiCorpus(object):
     def __init__(self):
         self.wakati_list = []
 
-    def run(self):
+    def run(self, add_bos=True):
         tagger = MeCab.Tagger('-Ochasen')
         tagger.parseToNode('') # to prevent GC
 
         for text in wiki_sentences():
-            encoded_text = text
+            encoded_text = WakatiCorpus.preprocess(text)
             node = tagger.parseToNode(encoded_text)
             sentence = Sentence(node)
             wakati = sentence.to_wakati()
             if wakati:
-                self.wakati_list.append(wakati + '\n')
+                self.wakati_list.append('<bos> ' + wakati + ' <eos>\n')
 
     def load(self, filename):
         with open(filename, 'r', encoding='utf-8') as f:
@@ -57,6 +57,11 @@ class WakatiCorpus(object):
 
     def loaded(self):
         return len(self.wakati_list) > 0
+    
+    @staticmethod
+    def preprocess(text):
+        text = text.lower()
+        return text
 
 
 class DocumentIterator(object):
