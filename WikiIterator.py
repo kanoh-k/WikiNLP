@@ -107,6 +107,7 @@ class SentenceIterator(object):
         self.sentences = self._break(document)
 
     def _break(self, sentences):
+        sentences = sentences.replace('。', '。\n')
         lines = sentences.split('\n')
         return [line for line in lines if len(line) > 0]
 
